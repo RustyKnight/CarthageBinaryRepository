@@ -5,6 +5,7 @@
  */
 package org.kaizen.cbr;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -195,6 +196,7 @@ public class EnrtyPoint extends HttpServlet {
 
     protected void processBadRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        System.out.println("Perfoming post :)");
         response.sendError(404, "Unknown resource");
     }
 
@@ -212,13 +214,10 @@ public class EnrtyPoint extends HttpServlet {
             throws ServletException, IOException {
 //        processRequest(request, response);
         String path = request.getRequestURI();
-        System.out.println("Path = " + path);
         List<String> parts = new ArrayList<String>(Arrays.asList(path.split("\\/")));
         if (parts.size() > 0) {
             parts.remove(0);
         }
-        System.out.println("Path elements = " + parts.size());
-        System.out.println("Path elements = " + parts);
         if (parts.size() == 0) {
             // Do we want to list the libaries?
             System.out.println("List libraries");
@@ -254,7 +253,23 @@ public class EnrtyPoint extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+        System.out.println("DoPost");
+//        processRequest(request, response);
+
+        StringBuilder sb = new StringBuilder(256);
+        try (BufferedReader br = request.getReader()) {
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                sb.append(line).append("\n");
+            }
+        }
+        
+        System.out.println(sb.toString());
+        
+        response.setContentType("text/plain");
+        response.setStatus(200);
+        response.getOutputStream().println("All good, thanks");
+
     }
 
     /**

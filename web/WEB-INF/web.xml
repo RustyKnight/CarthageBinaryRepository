@@ -8,11 +8,11 @@
         <servlet-name>Carthage Binary Repository</servlet-name>
         <url-pattern>/*</url-pattern>
     </servlet-mapping>
-    <session-config>
+<!--    <session-config>
         <session-timeout>
             30
         </session-timeout>
-    </session-config>
+    </session-config>-->
     <context-param>
         <param-name>Repository.location</param-name>
         <param-value>/Users/shanewhitehead/.CarthageBinaryRepository</param-value>
