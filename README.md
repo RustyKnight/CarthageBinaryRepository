@@ -42,4 +42,4 @@ This is why the project is a Java/Web based project, primary focused been run wi
 
 # Disclaimer
 
-This is NOT meant to look pretty, it's meant to be fast, simply and work
+This is NOT meant to look pretty, it's meant to be fast, simple and work
