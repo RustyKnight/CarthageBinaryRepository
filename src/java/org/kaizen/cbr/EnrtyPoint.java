@@ -5,16 +5,18 @@
  */
 package org.kaizen.cbr;
 
+import com.google.gson.Gson;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.security.AccessController;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -107,7 +109,7 @@ public class EnrtyPoint extends HttpServlet {
             out.println("</html>");
         }
     }
-    
+
     protected void processVersionBinariesList(String library, String version, HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -263,12 +265,19 @@ public class EnrtyPoint extends HttpServlet {
                 sb.append(line).append("\n");
             }
         }
-        
-        System.out.println(sb.toString());
-        
-        response.setContentType("text/plain");
-        response.setStatus(200);
-        response.getOutputStream().println("All good, thanks");
+
+        Gson gson = new Gson();
+        Upload upload = gson.fromJson(sb.toString(), Upload.class);
+
+        try {
+            RepositoryManager.INSTANCE.upload(getServletContext(), upload);
+
+            response.setContentType("text/plain");
+            response.setStatus(200);
+            response.getOutputStream().println("All good, thanks");
+        } catch (RepositoryManager.InvalidParameterException ex) {
+            throw new ServletException("Failed to store upload", ex);
+        }
 
     }
 

@@ -7,6 +7,9 @@ package org.kaizen.cbr;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -16,6 +19,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletContext;
+import org.apache.tomcat.util.codec.binary.Base64;
 
 /**
  *
@@ -158,6 +162,35 @@ public enum RepositoryManager {
         System.out.println("Requesting binary for " + library + "/" + version + "/" + xcodeVersion + " sending " + files[0].getPath());
 
         return files[0];
+    }
+    
+    public void upload(ServletContext context, Upload upload) throws InvalidParameterException, IOException {
+        String root = getRepositoryRoot(context);
+        if (root == null) {
+            throw new IOException("Repository store is not configured");
+        }
+        Version version = new Version(upload.libraryVersion);
+        String path = root + "/" + upload.name + "/" + version.toString();
+        System.out.println("Store path = " + path);
+        File filePath = new File(path);
+        if (!(filePath.exists() || filePath.mkdirs())) {
+            throw new IOException("Could not create required output path");
+        }
+        
+        String name = upload.xcodeVersion + "b" + upload.xcodeBuild + ".zip";
+        System.out.println("Library name = " + name);
+        
+        File libraryFile = new File(filePath, name);
+        
+        byte[] data = Base64.decodeBase64(upload.data);
+        try (OutputStream os = new FileOutputStream(libraryFile)) {
+            os.write(data);
+        }
+        
+        if (!libraryFile.exists()) {
+            System.out.println("!! Didn't seem to write file");
+            throw new IOException("Failed to store library in repository");
+        }
     }
 
     public class Binary {
