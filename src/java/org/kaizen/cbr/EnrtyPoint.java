@@ -8,6 +8,7 @@ package org.kaizen.cbr;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -168,13 +169,14 @@ public class EnrtyPoint extends HttpServlet {
 		response.setContentType("application/json");
 
 		try (PrintWriter out = response.getWriter()) {
-			/* TODO output your page here. You may use following sample code. */
 			out.println("{");
-			String path = "https://" + request.getServerName() + ":" + request.getServerPort() + "/";
+			String path = "https://" + request.getServerName() + ":" + request.getServerPort() + "/binary/";
 			for (Binary binary : binaries) {
-				// At this point, the name is irrelevent, it only matters that 
-				// it is carried as part of the overall query
-				out.println("\t\"" + binary.getVesion() + "\": \"" + path + library + "/" + binary.getVesion() + "/" + xcodeVersion + "-framework.zip\"");
+				String name = library + "-v" + binary.getVesion() + "-Xcode" + xcodeVersion + "-framework.zip";
+				
+				out.println("\t\"" + binary.getVesion() + "\": \"" + 
+								path + 
+								library + "/" + binary.getVesion() + "/" + xcodeVersion + "/" + name + "\"");
 			}
 			out.println("}");
 		}
@@ -210,6 +212,53 @@ public class EnrtyPoint extends HttpServlet {
 		response.sendError(404, "Unknown resource");
 	}
 
+	protected void downloadBinary(List<String> parts, HttpServletRequest request, HttpServletResponse response)
+					throws ServletException, IOException {
+		
+		if (parts.size() != 5) {
+			response.sendError(404, "Unknown resource");
+			return;
+		}
+		
+//		binary/KeychainAccess/3.1.1/10.0b10A255/KeychainAccess-v3.1.1-Xcode10.0b10A255-framework.zip
+
+		String library = parts.get(1);
+		String version = parts.get(2);
+		String xcode = parts.get(3);
+		
+		String name = parts.get(4);
+
+		LOGGER.log(Level.INFO, "library = " + library);
+		LOGGER.log(Level.INFO, "version = " + version);
+		LOGGER.log(Level.INFO, "xcode = " + xcode);
+		LOGGER.log(Level.INFO, "name = " + name);
+		
+		File file = RepositoryManager.INSTANCE.getBinary(getServletContext(), library, version, xcode);
+		if (file == null) {
+			LOGGER.log(Level.SEVERE, "No library exists");
+			response.sendError(404, "Unknown resource");
+			return;
+		}
+
+		LOGGER.log(Level.INFO, "Libary stored @ " + file);
+		
+		response.setContentType("application/zip");
+		response.setHeader("Content-disposition", "attachment; filename=" + name);
+		response.setHeader("Content-Length", Long.toString(file.length()));
+		try (InputStream is = new FileInputStream(file);
+						OutputStream os = response.getOutputStream()) {
+			byte[] bytes = new byte[4096];
+			int bytesRead = -1;
+			long totalBytesRead = 0;
+			while ((bytesRead = is.read(bytes)) != -1) {
+				totalBytesRead += bytesRead;
+				os.write(bytes, 0, bytesRead);
+			}
+			LOGGER.log(Level.INFO, "totalBytesRead = " + totalBytesRead);
+		}
+		
+	}
+
 	// <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
 	/**
 	 * Handles the HTTP <code>GET</code> method.
@@ -228,7 +277,10 @@ public class EnrtyPoint extends HttpServlet {
 		if (parts.size() > 0) {
 			parts.remove(0);
 		}
-		if (parts.size() == 0) {
+		
+		if (parts.size() > 1 && parts.get(0).equals("binary")) {
+			downloadBinary(parts, request, response);
+		} else if (parts.size() == 0) {
 			// Do we want to list the libaries?
 			LOGGER.log(Level.INFO, "List avaliable libraries");
 			processLibraryList(request, response);
