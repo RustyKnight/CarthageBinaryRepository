@@ -253,7 +253,7 @@ public class EnrtyPoint extends HttpServlet {
 					throws ServletException, IOException {
 		LOGGER.log(Level.INFO, "DoPost");
 
-		request.getSession().setMaxInactiveInterval(6000000);
+//		request.getSession().setMaxInactiveInterval(6000000);
 
 		String name = request.getParameter("name");
 		String libraryVersion = request.getParameter("version");
@@ -306,11 +306,15 @@ public class EnrtyPoint extends HttpServlet {
 //				LOGGER.log(Level.SEVERE, "Failed to store upload", error);
 //			}
 //		}
-
-		LOGGER.log(Level.INFO, "Sending response");
-		response.setContentType("text/plain");
-		response.setStatus(200);
-		response.getOutputStream().println("All good, thanks");
+//		try {
+//			Thread.sleep(1000);
+//		} catch (InterruptedException ex) {
+//		}
+//		LOGGER.log(Level.INFO, "Sending response");
+//		response.setStatus(200);
+//		response.setContentType("text/plain");
+//		response.getOutputStream().println("All good, thanks");
+//		response.flushBuffer();
 
 	}
 
