@@ -157,30 +157,30 @@ public class EnrtyPoint extends HttpServlet {
 		}
 	}
 
-	protected void processXcodeBinariesList(String library, String xcodeVersion, HttpServletRequest request, HttpServletResponse response)
-					throws ServletException, IOException {
-
-		List<Binary> binaries = RepositoryManager.INSTANCE.getXcodeBinaries(getServletContext(), library, xcodeVersion);
-		if (binaries.size() == 0) {
-			response.sendError(404, "No binaries avaliable for " + library + "/Xcode-" + xcodeVersion);
-			return;
-		}
-
-		response.setContentType("application/json");
-
-		try (PrintWriter out = response.getWriter()) {
-			out.println("{");
-			String path = "https://" + request.getServerName() + ":" + request.getServerPort() + "/binary/";
-			for (Binary binary : binaries) {
-				String name = library + "-v" + binary.getVesion() + "-Xcode" + xcodeVersion + "-framework.zip";
-				
-				out.println("\t\"" + binary.getVesion() + "\": \"" + 
-								path + 
-								library + "/" + binary.getVesion() + "/" + xcodeVersion + "/" + name + "\"");
-			}
-			out.println("}");
-		}
-	}
+//	protected void processXcodeBinariesList(String library, String xcodeVersion, HttpServletRequest request, HttpServletResponse response)
+//					throws ServletException, IOException {
+//
+//		List<Binary> binaries = RepositoryManager.INSTANCE.getXcodeBinaries(getServletContext(), library, xcodeVersion);
+//		if (binaries.size() == 0) {
+//			response.sendError(404, "No binaries avaliable for " + library + "/Xcode-" + xcodeVersion);
+//			return;
+//		}
+//
+//		response.setContentType("application/json");
+//
+//		try (PrintWriter out = response.getWriter()) {
+//			out.println("{");
+//			String path = "https://" + request.getServerName() + ":" + request.getServerPort() + "/binary/";
+//			for (Binary binary : binaries) {
+//				String name = library + "-v" + binary.getVesion() + "-Xcode" + xcodeVersion + "-framework.zip";
+//				
+//				out.println("\t\"" + binary.getVesion() + "\": \"" + 
+//								path + 
+//								library + "/" + binary.getVesion() + "/" + xcodeVersion + "/" + name + "\"");
+//			}
+//			out.println("}");
+//		}
+//	}
 
 	protected void processBinary(String library, String version, String xcodeVersion, HttpServletRequest request, HttpServletResponse response)
 					throws ServletException, IOException {
@@ -258,6 +258,43 @@ public class EnrtyPoint extends HttpServlet {
 		}
 		
 	}
+	
+	
+	protected void downloadJson(List<String> parts, HttpServletRequest request, HttpServletResponse response)
+					throws ServletException, IOException {
+		
+		if (parts.size() != 3) {
+			response.sendError(404, "Unknown resource");
+			return;
+		}
+		
+//		json/10.0b10A255/KeychainAccess
+
+		String xcode = parts.get(1);
+		String library = parts.get(2);
+		
+		List<Binary> binaries = RepositoryManager.INSTANCE.getXcodeBinaries(getServletContext(), library, xcode);
+		if (binaries.size() == 0) {
+			response.sendError(404, "No binaries avaliable for " + library + "/Xcode-" + xcode);
+			return;
+		}
+
+		response.setContentType("application/json");
+
+		try (PrintWriter out = response.getWriter()) {
+			out.println("{");
+			String path = "https://" + request.getServerName() + ":" + request.getServerPort() + "/binary/";
+			for (Binary binary : binaries) {
+				String name = library + "-v" + binary.getVesion() + "-Xcode" + xcode + "-framework.zip";
+				
+				out.println("\t\"" + binary.getVesion() + "\": \"" + 
+								path + 
+								library + "/" + binary.getVesion() + "/" + xcode + "/" + name + "\"");
+			}
+			out.println("}");
+		}
+		
+	}
 
 	// <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
 	/**
@@ -280,6 +317,8 @@ public class EnrtyPoint extends HttpServlet {
 		
 		if (parts.size() > 1 && parts.get(0).equals("binary")) {
 			downloadBinary(parts, request, response);
+		} else if (parts.size() > 1 && parts.get(0).equals("json")) {
+			downloadJson(parts, request, response);
 		} else if (parts.size() == 0) {
 			// Do we want to list the libaries?
 			LOGGER.log(Level.INFO, "List avaliable libraries");
@@ -293,8 +332,8 @@ public class EnrtyPoint extends HttpServlet {
 				LOGGER.log(Level.INFO, "List avaliable library binary versions");
 				processVersionBinariesList(parts.get(0), parts.get(1), request, response);
 			} else {
-				LOGGER.log(Level.INFO, "List avaliable xcode binary versions");
-				processXcodeBinariesList(parts.get(0), parts.get(1), request, response);
+//				LOGGER.log(Level.INFO, "List avaliable xcode binary versions");
+//				processXcodeBinariesList(parts.get(0), parts.get(1), request, response);
 			}
 		} else if (parts.size() == 3) {
 			LOGGER.log(Level.INFO, "Get binary");
