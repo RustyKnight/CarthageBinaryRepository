@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletContext;
+import javax.servlet.http.Part;
 import org.apache.tomcat.util.codec.binary.Base64;
 
 /**
@@ -163,31 +165,51 @@ public enum RepositoryManager {
 
 		return files[0];
 	}
+//		String name = request.getParameter("name");
+//		String libraryVersion = request.getParameter("version");
+//		String xcodeVersion = request.getParameter("xcodeVersion");
+//		String xcodeBuild = request.getParameter("xcodeBuild");
+//		Part filePart = request.getPart("binary");
+//		
+//		RepositoryManager.INSTANCE.upload(getServletContext(), 
+//						name, libraryVersion, xcodeVersion, xcodeBuild,
+//						filePart	);
 
-	public void upload(ServletContext context, Upload upload) throws InvalidParameterException, IOException {
+	public void upload(ServletContext context, String name, String libraryVersion, String xcodeVersion, String xcodeBuild, Part filePart) throws InvalidParameterException, IOException {
 		String root = getRepositoryRoot(context);
 		if (root == null) {
 			throw new IOException("Repository store is not configured");
 		}
-		Version version = new Version(upload.libraryVersion);
-		String path = root + "/" + upload.name + "/" + version.toString();
+		System.out.println("Root = " + root);
+		Version version = new Version(libraryVersion);
+		String path = root + "/" + name + "/" + version.toString();
+		System.out.println("Store path = " + path);
 		LOGGER.log(Level.INFO, "Store path = " + path);
 		File filePath = new File(path);
 		if (!(filePath.exists() || filePath.mkdirs())) {
+			System.out.println("Failed to create output path");
 			throw new IOException("Could not create required output path");
 		}
 
-		String name = upload.xcodeVersion + "b" + upload.xcodeBuild + ".zip";
-		LOGGER.log(Level.INFO, "Library name = " + name);
+		String fileName = xcodeVersion + "b" + xcodeBuild + ".zip";
+		System.out.println("fileName = " + fileName);
+		LOGGER.log(Level.INFO, "Library name = " + fileName);
 
 		File libraryFile = new File(filePath, name);
-
-		byte[] data = Base64.decodeBase64(upload.data);
-		try (OutputStream os = new FileOutputStream(libraryFile)) {
-			os.write(data);
+		try (InputStream is = filePart.getInputStream(); OutputStream os = new FileOutputStream(libraryFile)) {
+			byte bytes[] = new byte[4096];
+			int bytesRead = -1;
+			long totalBytesRead = 0;
+			while ((bytesRead = is.read(bytes)) != -1) {
+				totalBytesRead += bytesRead;
+				os.write(bytes, 0, bytesRead);
+			}
+			System.out.println("totalBytesRead = " + totalBytesRead);
+			LOGGER.log(Level.INFO, "totalBytesRead = " + totalBytesRead);
 		}
 
 		if (!libraryFile.exists()) {
+			System.out.println("!! Didn't seem to write file");
 			LOGGER.log(Level.INFO, "!! Didn't seem to write file");
 			throw new IOException("Failed to store library in repository");
 		}

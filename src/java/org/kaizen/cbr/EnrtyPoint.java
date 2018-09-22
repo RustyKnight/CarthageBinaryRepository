@@ -5,8 +5,6 @@
  */
 package org.kaizen.cbr;
 
-import com.google.gson.Gson;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -18,9 +16,11 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.Part;
 import org.kaizen.cbr.RepositoryManager.Binary;
 import org.kaizen.cbr.RepositoryManager.Version;
 
@@ -28,6 +28,7 @@ import org.kaizen.cbr.RepositoryManager.Version;
  *
  * @author shanewhitehead
  */
+@MultipartConfig
 public class EnrtyPoint extends HttpServlet {
 
 	private final static Logger LOGGER = Logger.getLogger(EnrtyPoint.class.getName());
@@ -252,27 +253,64 @@ public class EnrtyPoint extends HttpServlet {
 					throws ServletException, IOException {
 		LOGGER.log(Level.INFO, "DoPost");
 
-		StringBuilder sb = new StringBuilder(256);
-		try (BufferedReader br = request.getReader()) {
-			String line = null;
-			while ((line = br.readLine()) != null) {
-				sb.append(line).append("\n");
-			}
-		}
+		request.getSession().setMaxInactiveInterval(6000000);
 
-		Gson gson = new Gson();
-		Upload upload = gson.fromJson(sb.toString(), Upload.class);
+		String name = request.getParameter("name");
+		String libraryVersion = request.getParameter("version");
+		String xcodeVersion = request.getParameter("xcodeVersion");
+		String xcodeBuild = request.getParameter("xcodeBuild");
+		Part filePart = request.getPart("binary");
+			
+		LOGGER.log(Level.INFO, "name = " + name);
+		LOGGER.log(Level.INFO, "libraryVersion = " + libraryVersion);
+		LOGGER.log(Level.INFO, "xcodeVersion = " + xcodeVersion);
+		LOGGER.log(Level.INFO, "xcodeBuild = " + xcodeBuild);
 
 		try {
-			RepositoryManager.INSTANCE.upload(getServletContext(), upload);
-
+			LOGGER.log(Level.INFO, "xcodeBuild = " + xcodeBuild);
+			RepositoryManager.INSTANCE.upload(getServletContext(),
+							name, libraryVersion, xcodeVersion, xcodeBuild,
+							filePart);
+		} catch (RepositoryManager.InvalidParameterException exp) {
+			LOGGER.log(Level.SEVERE, "Failed to uplod", exp);
+			response.setStatus(500);
 			response.setContentType("text/plain");
-			response.setStatus(200);
-			response.getOutputStream().println("All good, thanks");
-		} catch (RepositoryManager.InvalidParameterException ex) {
-			LOGGER.log(Level.SEVERE, "Failed to store upload", ex);
-			throw new ServletException("Failed to store upload", ex);
+			response.getOutputStream().println("");
 		}
+//		File tempFile = File.createTempFile("upload", ".dat");
+//		try (FileOutputStream fos = new FileOutputStream(tempFile);
+//						InputStream is = request.getInputStream()) {
+//			byte[] bytes = new byte[4096];
+//			int bytesRead = -1;
+//			long totalBytes = 0;
+//			while ((bytesRead = is.read(bytes)) != -1) {
+//				totalBytes += bytesRead;
+//				fos.write(bytes, 0, bytesRead);
+//			}
+//			LOGGER.log(Level.INFO, "totalBytes = " + totalBytes);
+//			try (BufferedReader br = new BufferedReader(new FileReader(tempFile))) {
+//				LOGGER.log(Level.INFO, "Load JSON");
+//				Gson gson = new Gson();
+//				Upload upload = gson.fromJson(br, Upload.class);
+////			Upload upload = gson.fromJson(sb.toString(), Upload.class);
+//				LOGGER.log(Level.INFO, "Storing upload");
+//				RepositoryManager.INSTANCE.upload(getServletContext(), upload);
+//
+//			} catch (RepositoryManager.InvalidParameterException ex) {
+//				LOGGER.log(Level.SEVERE, "Failed to store upload", ex);
+//				throw new ServletException("Failed to store upload", ex);
+//			} catch (Exception ex) {
+//				LOGGER.log(Level.SEVERE, "Failed to store upload", ex);
+//				throw new ServletException("Failed to store upload", ex);
+//			} catch (Error error) {
+//				LOGGER.log(Level.SEVERE, "Failed to store upload", error);
+//			}
+//		}
+
+		LOGGER.log(Level.INFO, "Sending response");
+		response.setContentType("text/plain");
+		response.setStatus(200);
+		response.getOutputStream().println("All good, thanks");
 
 	}
 

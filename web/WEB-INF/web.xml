@@ -15,6 +15,6 @@
     </session-config>-->
     <context-param>
         <param-name>Repository.location</param-name>
-        <param-value>/Users/shanewhitehead/.CarthageBinaryRepository</param-value>
+        <param-value>/Users/swhitehead/.CarthageBinaryRepository</param-value>
     </context-param>
 </web-app>
