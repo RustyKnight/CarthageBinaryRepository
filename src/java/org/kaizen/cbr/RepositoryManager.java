@@ -38,6 +38,30 @@ public enum RepositoryManager {
 	protected String getRepositoryRoot(ServletContext context) {
 		return context.getInitParameter(REPOSITORY_LOCATION_KEY);
 	}
+	
+	public List<String> getLibraries(ServletContext context) {
+		ArrayList<String> libraries = new ArrayList<>();
+		String root = getRepositoryRoot(context);
+		
+		File path = new File(root);
+		if (!path.exists() || !path.isDirectory()) {
+			return libraries;
+		}
+		
+		File[] libs = path.listFiles(new FileFilter() {
+			@Override
+			public boolean accept(File pathname) {
+				return pathname.isDirectory();
+			}
+		});
+		
+		for (File lib : libs) {
+			libraries.add(lib.getName());
+		}
+		
+		return libraries;
+		
+	}
 
 	public List<Version> getVersions(ServletContext context, String library) {
 		ArrayList<Version> versions = new ArrayList<>();
@@ -195,7 +219,8 @@ public enum RepositoryManager {
 		System.out.println("fileName = " + fileName);
 		LOGGER.log(Level.INFO, "Library name = " + fileName);
 
-		File libraryFile = new File(filePath, name);
+		File libraryFile = new File(filePath, fileName);
+		LOGGER.log(Level.INFO, "Library file = " + libraryFile);
 		try (InputStream is = filePart.getInputStream(); OutputStream os = new FileOutputStream(libraryFile)) {
 			byte bytes[] = new byte[4096];
 			int bytesRead = -1;

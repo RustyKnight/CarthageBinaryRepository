@@ -72,6 +72,14 @@ public class EnrtyPoint extends HttpServlet {
 			out.println("</head>");
 			out.println("<body>");
 			out.println("<h1>List of awesome libraries</h1>");
+
+			List<String> libraries = RepositoryManager.INSTANCE.getLibraries(getServletContext());
+			out.println("<ul>");
+			for (String lib : libraries) {
+				out.println("<li><a href='" + lib + "'>" + lib + "</a></li>");
+			}
+			out.println("</ul>");
+
 			out.println("</body>");
 			out.println("</html>");
 		}
@@ -99,7 +107,16 @@ public class EnrtyPoint extends HttpServlet {
 			out.println("<h1>Avaliable releases for [" + library + "]</h1>");
 			out.println("<ul>");
 			for (Version version : versions) {
-				out.println("<li>" + version.toString() + "</li>");
+				out.println("<li><a href='" + library + "/" + version.toString() + "'>" + version.toString() + "</a></li>");
+
+				out.println("<ul>");
+				List<Binary> binaries = RepositoryManager.INSTANCE.getBinariesAvaliableByVersion(getServletContext(), library, version.toString());
+				for (Binary binary : binaries) {
+					String name = binary.getBinary().getName();
+					String anchor = library + "/" + name.replace(".zip", "");
+					out.println("<li><a href='" + anchor+ "'>" + name + "</a></li>");
+				}
+				out.println("</ul>");
 			}
 			out.println("</ul>");
 			out.println("</body>");
@@ -131,11 +148,6 @@ public class EnrtyPoint extends HttpServlet {
 			out.println("<ul>");
 			for (Binary binary : binaries) {
 				String name = binary.getBinary().getName();
-				name = name.replace("Xcode-", "");
-				name = name.replace("Xcode", "");
-				name = name.replace("-framework.zip", "");
-				name = name.replace(".framework.zip", "");
-				name = name.replace("framework.zip", "");
 				out.println("<li>" + name + "</li>");
 			}
 			out.println("</ul>");
@@ -254,13 +266,12 @@ public class EnrtyPoint extends HttpServlet {
 		LOGGER.log(Level.INFO, "DoPost");
 
 //		request.getSession().setMaxInactiveInterval(6000000);
-
 		String name = request.getParameter("name");
 		String libraryVersion = request.getParameter("version");
 		String xcodeVersion = request.getParameter("xcodeVersion");
 		String xcodeBuild = request.getParameter("xcodeBuild");
 		Part filePart = request.getPart("binary");
-			
+
 		LOGGER.log(Level.INFO, "name = " + name);
 		LOGGER.log(Level.INFO, "libraryVersion = " + libraryVersion);
 		LOGGER.log(Level.INFO, "xcodeVersion = " + xcodeVersion);
