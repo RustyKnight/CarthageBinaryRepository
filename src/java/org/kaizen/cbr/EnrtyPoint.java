@@ -107,15 +107,21 @@ public class EnrtyPoint extends HttpServlet {
 
 			out.println("<h1>Avaliable releases for [" + library + "]</h1>");
 			out.println("<ul>");
+			String baseJsonPath = "https://" + request.getServerName() + ":" + request.getServerPort() + "/json/";
 			for (Version version : versions) {
 				out.println("<li><a href='" + library + "/" + version.toString() + "'>" + version.toString() + "</a></li>");
 
 				out.println("<ul>");
 				List<Binary> binaries = RepositoryManager.INSTANCE.getBinariesAvaliableByVersion(getServletContext(), library, version.toString());
 				for (Binary binary : binaries) {
+
+					//https://kaizen.api.net:8443/json/10.1b10O23u/KeychainAccess
+					String binaryPath = binary.getBinary().getName();
+					binaryPath = binaryPath.replace(".zip", "");
+					String jsonPath = baseJsonPath + binaryPath + "/" + library;
+
 					String name = binary.getBinary().getName();
-					String anchor = library + "/" + name.replace(".zip", "");
-					out.println("<li><a href='" + anchor+ "'>" + name + "</a></li>");
+					out.println("<li><a href='" + jsonPath + "'>" + jsonPath + "</a></li>");
 				}
 				out.println("</ul>");
 			}
@@ -181,7 +187,6 @@ public class EnrtyPoint extends HttpServlet {
 //			out.println("}");
 //		}
 //	}
-
 	protected void processBinary(String library, String version, String xcodeVersion, HttpServletRequest request, HttpServletResponse response)
 					throws ServletException, IOException {
 
@@ -214,25 +219,24 @@ public class EnrtyPoint extends HttpServlet {
 
 	protected void downloadBinary(List<String> parts, HttpServletRequest request, HttpServletResponse response)
 					throws ServletException, IOException {
-		
+
 		if (parts.size() != 5) {
 			response.sendError(404, "Unknown resource");
 			return;
 		}
-		
-//		binary/KeychainAccess/3.1.1/10.0b10A255/KeychainAccess-v3.1.1-Xcode10.0b10A255-framework.zip
 
+//		binary/KeychainAccess/3.1.1/10.0b10A255/KeychainAccess-v3.1.1-Xcode10.0b10A255-framework.zip
 		String library = parts.get(1);
 		String version = parts.get(2);
 		String xcode = parts.get(3);
-		
+
 		String name = parts.get(4);
 
 		LOGGER.log(Level.INFO, "library = " + library);
 		LOGGER.log(Level.INFO, "version = " + version);
 		LOGGER.log(Level.INFO, "xcode = " + xcode);
 		LOGGER.log(Level.INFO, "name = " + name);
-		
+
 		File file = RepositoryManager.INSTANCE.getBinary(getServletContext(), library, version, xcode);
 		if (file == null) {
 			LOGGER.log(Level.SEVERE, "No library exists");
@@ -241,7 +245,7 @@ public class EnrtyPoint extends HttpServlet {
 		}
 
 		LOGGER.log(Level.INFO, "Libary stored @ " + file);
-		
+
 		response.setContentType("application/zip");
 		response.setHeader("Content-disposition", "attachment; filename=" + name);
 		response.setHeader("Content-Length", Long.toString(file.length()));
@@ -256,44 +260,7 @@ public class EnrtyPoint extends HttpServlet {
 			}
 			LOGGER.log(Level.INFO, "totalBytesRead = " + totalBytesRead);
 		}
-		
-	}
-	
-	
-	protected void downloadJson(List<String> parts, HttpServletRequest request, HttpServletResponse response)
-					throws ServletException, IOException {
-		
-		if (parts.size() != 3) {
-			response.sendError(404, "Unknown resource");
-			return;
-		}
-		
-//		json/10.0b10A255/KeychainAccess
 
-		String xcode = parts.get(1);
-		String library = parts.get(2);
-		
-		List<Binary> binaries = RepositoryManager.INSTANCE.getXcodeBinaries(getServletContext(), library, xcode);
-		if (binaries.size() == 0) {
-			response.sendError(404, "No binaries avaliable for " + library + "/Xcode-" + xcode);
-			return;
-		}
-
-		response.setContentType("application/json");
-
-		try (PrintWriter out = response.getWriter()) {
-			out.println("{");
-			String path = "https://" + request.getServerName() + ":" + request.getServerPort() + "/binary/";
-			for (Binary binary : binaries) {
-				String name = library + "-v" + binary.getVesion() + "-Xcode" + xcode + "-framework.zip";
-				
-				out.println("\t\"" + binary.getVesion() + "\": \"" + 
-								path + 
-								library + "/" + binary.getVesion() + "/" + xcode + "/" + name + "\"");
-			}
-			out.println("}");
-		}
-		
 	}
 
 	// <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
@@ -314,11 +281,9 @@ public class EnrtyPoint extends HttpServlet {
 		if (parts.size() > 0) {
 			parts.remove(0);
 		}
-		
+
 		if (parts.size() > 1 && parts.get(0).equals("binary")) {
 			downloadBinary(parts, request, response);
-		} else if (parts.size() > 1 && parts.get(0).equals("json")) {
-			downloadJson(parts, request, response);
 		} else if (parts.size() == 0) {
 			// Do we want to list the libaries?
 			LOGGER.log(Level.INFO, "List avaliable libraries");
@@ -326,20 +291,20 @@ public class EnrtyPoint extends HttpServlet {
 		} else if (parts.size() == 1) {
 			LOGGER.log(Level.INFO, "List avaliable library versions");
 			processVersionList(parts.get(0), request, response);
-		} else if (parts.size() == 2) {
-			String text = parts.get(1);
-			if (Version.isVersion(text)) {
-				LOGGER.log(Level.INFO, "List avaliable library binary versions");
-				processVersionBinariesList(parts.get(0), parts.get(1), request, response);
-			} else {
-//				LOGGER.log(Level.INFO, "List avaliable xcode binary versions");
-//				processXcodeBinariesList(parts.get(0), parts.get(1), request, response);
-			}
-		} else if (parts.size() == 3) {
-			LOGGER.log(Level.INFO, "Get binary");
-			processBinary(parts.get(0), parts.get(1), parts.get(2), request, response);
+//		} else if (parts.size() == 2) {
+//			String text = parts.get(1);
+//			if (Version.isVersion(text)) {
+//				LOGGER.log(Level.INFO, "List avaliable library binary versions");
+//				processVersionBinariesList(parts.get(0), parts.get(1), request, response);
+//			} else {
+////				LOGGER.log(Level.INFO, "List avaliable xcode binary versions");
+////				processXcodeBinariesList(parts.get(0), parts.get(1), request, response);
+//			}
+//		} else if (parts.size() == 3) {
+//			LOGGER.log(Level.INFO, "Get binary");
+//			processBinary(parts.get(0), parts.get(1), parts.get(2), request, response);
 		} else {
-			processBadRequest(request, response);
+			processLibraryList(request, response);
 		}
 	}
 

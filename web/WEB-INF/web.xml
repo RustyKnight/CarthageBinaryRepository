@@ -4,9 +4,17 @@
         <servlet-name>Carthage Binary Repository</servlet-name>
         <servlet-class>org.kaizen.cbr.EnrtyPoint</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>JSON Generator</servlet-name>
+        <servlet-class>org.kaizen.cbr.JsonGenerator</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>Carthage Binary Repository</servlet-name>
         <url-pattern>/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>JSON Generator</servlet-name>
+        <url-pattern>/json/*</url-pattern>
     </servlet-mapping>
 <!--    <session-config>
         <session-timeout>
