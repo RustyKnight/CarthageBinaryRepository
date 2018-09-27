@@ -10,6 +10,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.StringJoiner;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -25,17 +26,16 @@ public class JsonGenerator extends HttpServlet {
 
 	protected void downloadJson(List<String> parts, HttpServletRequest request, HttpServletResponse response)
 					throws ServletException, IOException {
-		
+
 		if (parts.size() != 3) {
 			response.sendError(404, "Unknown resource");
 			return;
 		}
-		
-//		json/10.0b10A255/KeychainAccess
 
+//		json/10.0b10A255/KeychainAccess
 		String xcode = parts.get(1);
 		String library = parts.get(2);
-		
+
 		List<RepositoryManager.Binary> binaries = RepositoryManager.INSTANCE.getXcodeBinaries(getServletContext(), library, xcode);
 		if (binaries.size() == 0) {
 			response.sendError(404, "No binaries avaliable for " + library + "/Xcode-" + xcode);
@@ -44,19 +44,20 @@ public class JsonGenerator extends HttpServlet {
 
 		response.setContentType("application/json");
 
-		try (PrintWriter out = response.getWriter()) {
-			out.println("{");
-			String path = "https://" + request.getServerName() + ":" + request.getServerPort() + "/binary/";
-			for (RepositoryManager.Binary binary : binaries) {
-				String name = library + "-v" + binary.getVesion() + "-Xcode" + xcode + "-framework.zip";
-				
-				out.println("\t\"" + binary.getVesion() + "\": \"" + 
-								path + 
-								library + "/" + binary.getVesion() + "/" + xcode + "/" + name + "\"");
-			}
-			out.println("}");
+		StringJoiner sj = new StringJoiner(",\r\n\t", "{\r\n\t", "\n}");
+		String path = "https://" + request.getServerName() + ":" + request.getServerPort() + "/binary/";
+		for (RepositoryManager.Binary binary : binaries) {
+			String name = library + "-v" + binary.getVesion() + "-Xcode" + xcode + "-framework.zip";
+
+			sj.add("\"" + binary.getVesion() + "\": \""
+							+ path
+							+ library + "/" + binary.getVesion() + "/" + xcode + "/" + name + "\"");
 		}
-		
+
+		try (PrintWriter out = response.getWriter()) {
+			out.println(sj.toString());
+		}
+
 	}
 
 	// <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
@@ -79,8 +80,7 @@ public class JsonGenerator extends HttpServlet {
 		if (parts.size() > 1 && parts.get(0).equals("json")) {
 			downloadJson(parts, request, response);
 		}
-		
-	}
 
+	}
 
 }
