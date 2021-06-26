@@ -23,6 +23,6 @@
     </session-config>-->
     <context-param>
         <param-name>Repository.location</param-name>
-        <param-value>/Users/swhitehead/.CarthageBinaryRepository</param-value>
+        <param-value>/home/swhitehead/.CarthageBinaryRepository</param-value>
     </context-param>
 </web-app>
