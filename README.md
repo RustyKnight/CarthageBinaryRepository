@@ -5,7 +5,7 @@ Dependency management in Xcode is … a mixed bag of joy, punctuated with mild a
 Swift’s lack of ABI stability doesn’t help.
 
 There are any number of available options from:
-*	Manual.  Either by using a workspace and subprojects or building desired libraries manually and then importing them into the project … or a mixture of both
+*	Manually.  Either by using a workspace and subprojects or building desired libraries manually and then importing them into the project … or a mixture of both
 * CocoaPods
 *	Carthage
 *	Swift Package Manager (not yet able to support iOS projects)
@@ -24,7 +24,7 @@ One of the larger issues, which made this even more frustrating, was Swift’s A
 
 # "A" solution…
 
-Recently, was Carthage updated to support “Binary only” releases.  Meaning that it was no longer tied to a source repo, but could be used to store and manage the archives separately.
+Recently, Carthage was updated to support “Binary only” releases.  Meaning that it was no longer tied to a source repo, but could be used to store and manage the archives separately.
 
 One of the requirements for this, is to store the binaries on https backed server.  This is kind of annoying, but respected.
 
